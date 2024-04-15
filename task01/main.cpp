@@ -3,7 +3,6 @@
 #include <cassert>
 #include <vector>
 #include <filesystem>
-//
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #include <cmath>
@@ -43,7 +42,11 @@ void draw_triangle(
 }
 
 
-// === Those are student-added functions for better code readability ===
+// === Those are student-added functions/types for better code readability ===
+
+// Enumerate the step direction for DDA
+enum step_direction {horizontal, vertical, undefined};
+
 /**
  * @brief (Added by student for readability) Computes the inner dot product of two vectors
  * represented by (x0, y0) and (x1, y1)
@@ -86,6 +89,12 @@ float norm(
       return std::sqrt(
         std::pow(x0, 2) + std::pow(y0, 2)
       );
+}
+
+// Shortcut for logging the error
+template <typename T>
+void print(T log_obj){
+  std::cout << log_obj << std::endl;
 }
 
 /**
@@ -142,29 +151,58 @@ void dda_line(
   auto dx = x1 - x0;
   auto dy = y1 - y0;
   // write some code below to paint pixel on the line with color `brightness`
-  float slope = dy / dx;
-  if (slope <= 1.0){
-    // Step horizontally by 1 px, remember that x_cur shall include the endpoint.
-    for (int x_cur = x0; x_cur <= x1; x_cur++){
-      float diff_x = x_cur - x0;
-      float diff_y = slope * diff_x;
-      float target_y = y0 + diff_y;
-      // Perform flooring to figure out the int pixel position.
-      float paint_target_x = std::floor(x_cur);
-      float paint_target_y = std::floor(target_y);
-      img_data[paint_target_y * width + paint_target_x] = brightness;
+  // Discuss-by-circumstance to get the step vector, represented by (x_step, y_step)
+  std::vector<float> step_vector{0, 0};
+  step_direction direction = undefined;
+  if (dx == 0 && dy == 0){ return; }
+  if (dx == 0){
+    // Draw along the vertical axis.
+    step_vector[0] = 0; 
+    step_vector[1] = dy / (std::abs(dy));   // Unit vec.
+    direction = vertical;
+  }
+  else if (dy == 0){
+    // Draw along horizontal axis.
+    step_vector[0] = dx / (std::abs(dx));  // Unit vec.
+    step_vector[1] = 0;
+    direction = horizontal;
+  }
+  // We are ready to discuss other situations.
+  else{
+    float slope = dy / dx;
+    if (std::abs(slope) <= 1.0){
+      // Step horizontally.
+      step_vector[0] = dx / (std::abs(dx));  // Unit vec.
+      step_vector[1] = slope;
+      direction = horizontal;
+    }
+    else{
+      // Step vertically.
+      step_vector[0] = 1 / slope;
+      step_vector[1] = dy / (std::abs(dy)); // Unit vec.
+      direction = vertical;
+    }
+  }
+  // The stepping logic.
+  if (direction == undefined){ throw std::invalid_argument("The direction is undefined."); }
+  if (direction == horizontal){
+    // The step limit is taken on the x-direction.
+    for (int step = 0; step <= std::abs(dx); step++){
+      float paint_target_x = x0 + step_vector[0] * step;
+      float paint_target_y = y0 + step_vector[1] * step;
+      int rastered_x = std::floor(paint_target_x);
+      int rastered_y = std::floor(paint_target_y);
+      img_data[rastered_y * width + rastered_x] = brightness;
     }
   }
   else{
-    // Step vertically by 1 px, remember that y_cur shall include the endpoint.
-    for (int y_cur = y0; y_cur <= y1; y_cur++){
-      float diff_y = y_cur - y0;
-      float diff_x = diff_y / slope;
-      float target_x = x0 + diff_x;
-      // Perform flooring.
-      float paint_target_x = std::floor(target_x);
-      float paint_target_y = std::floor(y_cur);
-      img_data[paint_target_y * width + paint_target_x] = brightness;
+    // The step limit is taken on the y-direction.
+    for (int step = 0; step <= std::abs(dy); step++){
+      float paint_target_x = x0 + step_vector[0] * step;
+      float paint_target_y = y0 + step_vector[1] * step;
+      int rastered_x = std::floor(paint_target_x);
+      int rastered_y = std::floor(paint_target_y);
+      img_data[rastered_y * width + rastered_x] = brightness;
     }
   }
 }

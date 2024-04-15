@@ -6,6 +6,7 @@
 //
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+#include <cmath>
 
 /**
  * @brief compute the area of a triangle
@@ -41,6 +42,52 @@ void draw_triangle(
   }
 }
 
+
+// === Those are student-added functions for better code readability ===
+/**
+ * @brief (Added by student for readability) Computes the inner dot product of two vectors
+ * represented by (x0, y0) and (x1, y1)
+ * @param x0 x-coordinate of the first end point
+ * @param y0 y-coordinate of the first end point
+ * @param x1 x-coordinate of the second end point
+ * @param y1 y-coordinate of the second end point
+ */
+float dot_product(
+    float x0, float y0,
+    float x1, float y1
+    ){
+      return (x0 * x1 + y0 * y1);
+}
+
+/**
+ * @brief (Added by student for readability) Returns the cross product z-VALUE of two 2D vectors
+ * represented by (x0, y0) and (x1, y1), assuming their z-coord are 0.
+ * @param x0 x-coordinate of the first end point
+ * @param y0 y-coordinate of the first end point
+ * @param x1 x-coordinate of the second end point
+ * @param y1 y-coordinate of the second end point
+ */
+float cross_product_2d(
+    float x0, float y0,
+    float x1, float y1
+    ){
+      return (x0 * y1 - y0 * x1);
+}
+
+/**
+ * @brief (Added by student for readability) Returns the norm of a 2D vector
+ * represented by (x0, y0).
+ * @param x0 x-coordinate of the end point
+ * @param y0 y-coordinate of the end point
+ */
+float norm(
+    float x0, float y0
+    ){
+      return std::sqrt(
+        std::pow(x0, 2) + std::pow(y0, 2)
+      );
+}
+
 /**
  * @brief draw a triangle using the barycentric coordinates
  * @param polygon_xy xy coordinates of the corners of the polygon (counter clockwise order)
@@ -65,6 +112,10 @@ void draw_polygon(
         float p1x = polygon_xy[i1_vtx * 2 + 0] - x;
         float p1y = polygon_xy[i1_vtx * 2 + 1] - y;
         // write a few lines of code to compute winding number (hint: use atan2)
+        float cos_theta = dot_product(p0x, p0y, p1x, p1y) / (norm(p0x, p0y) * norm(p1x, p1y));
+        float sin_theta = (1 / (norm(p0x, p0y) * norm(p1x, p1y))) * cross_product_2d(p0x, p0y, p1x, p1y);
+        float theta = std::atan2(sin_theta, cos_theta);
+        winding_number += theta / (2 * M_PI);
       }
       const int int_winding_number = int(std::round(winding_number));
       if (int_winding_number == 1 ) { // if (x,y) is inside the polygon
@@ -91,6 +142,31 @@ void dda_line(
   auto dx = x1 - x0;
   auto dy = y1 - y0;
   // write some code below to paint pixel on the line with color `brightness`
+  float slope = dy / dx;
+  if (slope <= 1.0){
+    // Step horizontally by 1 px, remember that x_cur shall include the endpoint.
+    for (int x_cur = x0; x_cur <= x1; x_cur++){
+      float diff_x = x_cur - x0;
+      float diff_y = slope * diff_x;
+      float target_y = y0 + diff_y;
+      // Perform flooring to figure out the int pixel position.
+      float paint_target_x = std::floor(x_cur);
+      float paint_target_y = std::floor(target_y);
+      img_data[paint_target_y * width + paint_target_x] = brightness;
+    }
+  }
+  else{
+    // Step vertically by 1 px, remember that y_cur shall include the endpoint.
+    for (int y_cur = y0; y_cur <= y1; y_cur++){
+      float diff_y = y_cur - y0;
+      float diff_x = diff_y / slope;
+      float target_x = x0 + diff_x;
+      // Perform flooring.
+      float paint_target_x = std::floor(target_x);
+      float paint_target_y = std::floor(y_cur);
+      img_data[paint_target_y * width + paint_target_x] = brightness;
+    }
+  }
 }
 
 int main() {

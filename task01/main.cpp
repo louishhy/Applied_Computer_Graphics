@@ -3,6 +3,7 @@
 #include <cassert>
 #include <vector>
 #include <filesystem>
+//
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #include <cmath>
@@ -64,7 +65,8 @@ float dot_product(
 
 /**
  * @brief (Added by student for readability) Returns the cross product z-VALUE of two 2D vectors
- * represented by (x0, y0) and (x1, y1), assuming their z-coord are 0.
+ * in the image-space right hand coordinate.
+ * Vectors are represented by (x0, y0) and (x1, y1), IN THE IMAGE RIGHT HAND COORD SPACE, assuming their z-coord are 0.
  * @param x0 x-coordinate of the first end point
  * @param y0 y-coordinate of the first end point
  * @param x1 x-coordinate of the second end point
@@ -74,7 +76,9 @@ float cross_product_2d(
     float x0, float y0,
     float x1, float y1
     ){
-      return (x0 * y1 - y0 * x1);
+      // Since v0 and v1 are defined in image space, which is a right-hand system,
+      // we add a negative sign to the normal cross product.
+      return -(x0 * y1 - y0 * x1);
 }
 
 /**
@@ -86,15 +90,11 @@ float cross_product_2d(
 float norm(
     float x0, float y0
     ){
-      return std::sqrt(
+      float ret = std::sqrt(
         std::pow(x0, 2) + std::pow(y0, 2)
       );
-}
-
-// Shortcut for logging the error
-template <typename T>
-void print(T log_obj){
-  std::cout << log_obj << std::endl;
+      assert(ret >= 0);
+      return ret;
 }
 
 /**
@@ -122,10 +122,11 @@ void draw_polygon(
         float p1y = polygon_xy[i1_vtx * 2 + 1] - y;
         // write a few lines of code to compute winding number (hint: use atan2)
         float cos_theta = dot_product(p0x, p0y, p1x, p1y) / (norm(p0x, p0y) * norm(p1x, p1y));
-        float sin_theta = (1 / (norm(p0x, p0y) * norm(p1x, p1y))) * cross_product_2d(p0x, p0y, p1x, p1y);
+        float sin_theta = cross_product_2d(p0x, p0y, p1x, p1y) / (norm(p0x, p0y) * norm(p1x, p1y));
         float theta = std::atan2(sin_theta, cos_theta);
-        winding_number += theta / (2 * M_PI);
+        winding_number += theta;
       }
+      winding_number = winding_number / (2 * M_PI);
       const int int_winding_number = int(std::round(winding_number));
       if (int_winding_number == 1 ) { // if (x,y) is inside the polygon
         img_data[ih*width + iw] = brightness;

@@ -49,6 +49,9 @@ cmake_install.cmake
 Makefile
 out
 
+# Ignore CMake Cache on Windows MinGW C++ distribution
+CMakeCache.txt
+
 # CLion
 .idea
 cmake-build-debug

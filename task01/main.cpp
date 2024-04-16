@@ -7,6 +7,8 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #include <cmath>
+// Mathematical constant definition for the constant difference across win and linux.
+#define M_PI 3.14159265358979323846
 
 /**
  * @brief compute the area of a triangle

@@ -126,7 +126,7 @@ int number_of_intersection_ray_against_quadratic_bezier(
   // 1. Calculate one of the normal vector for dir.
   Eigen::Vector2f normal(-dir[1], dir[0]);
   // 2. Calculate t, since now the equation has nothing to do with s anymore.
-  // The Bernstein eqn is given by p(t) = (1-t)^2 ps + t(1 - t) pc + t^2 pe.
+  // The Bernstein eqn is given by p(t) = (1-t)^2 ps + 2t(1 - t) pc + t^2 pe.
   // p(t) is perpendicular to normal. Hence, <p(t), normal> = 0
   // We can then solve the eqn wrt. t.
   // Define the coefficient for the quadratic eqn ax^2 + bx + c = 0

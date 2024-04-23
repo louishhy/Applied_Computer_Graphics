@@ -8,6 +8,10 @@
 #include "parse_svg.h"
 // Use <optional> for better readability in quadratic function solving.
 #include <optional>
+// Define M_PI if it is not defined.
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 /***
  * signed area of a triangle connecting points (p0, p1, p2) in counter-clockwise order.
@@ -127,24 +131,27 @@ int number_of_intersection_ray_against_quadratic_bezier(
   float c = (ps - org).dot(normal);
   // Solve the quadratic eqn.
   QuadraticSolution sol = solve_quadratic(a, b, c);
+  // Calculate the roots and intersection.
+  float intersection_count = 0;
   // If there are no solutions, return 0.
   if (!sol.root1.has_value() && !sol.root2.has_value()){ return 0; }
+  // Get the first root.
   float t_root1 = sol.root1.value();
-  float t_root2 = sol.root2.value();
-  // Solve for s for each t_root.
   Eigen::Vector2f p_t_root1 = std::pow(1 - t_root1, 2) * ps + t_root1 * (1 - t_root1) * pc + std::pow(t_root1, 2) * pe;
-  Eigen::Vector2f p_t_root2 = std::pow(1 - t_root2, 2) * ps + t_root2 * (1 - t_root2) * pc + std::pow(t_root2, 2) * pe;
+  // Solve for s for the first root.
   float s_root1 = (p_t_root1 - org).dot(dir) / dir.squaredNorm();
+  if (t_root1 > 0 && t_root1 < 1 && s_root1 > 0){ intersection_count++; }
+  // If the second root equals to the first root, early termination. Return the intersection count.
+  if (sol.root1 == sol.root2){ return intersection_count; }
+  // Get the second root.
+  float t_root2 = sol.root2.value();
+  Eigen::Vector2f p_t_root2 = std::pow(1 - t_root2, 2) * ps + t_root2 * (1 - t_root2) * pc + std::pow(t_root2, 2) * pe;
   float s_root2 = (p_t_root2 - org).dot(dir) / dir.squaredNorm();
-  // Normalization
-  s_root1 = s_root1 / dir.norm();
-  s_root2 = s_root2 / dir.norm();
-  float intersection_count = 0;
-  if (t_root1 >= 0 && t_root1 <= 1 && s_root1 >= 0){ intersection_count++; }
-  if (t_root2 >= 0 && t_root2 <= 1 && s_root2 >= 0){ intersection_count++; }
+  if (t_root2 > 0 && t_root2 < 1 && s_root2 > 0){ intersection_count++; }
   return intersection_count;
 }
 
+/*
 int number_of_intersection_ray_against_quadratic_bezier_debug(
     const Eigen::Vector2f &org,
     const Eigen::Vector2f &dir,
@@ -190,6 +197,8 @@ int number_of_intersection_ray_against_quadratic_bezier_debug(
   if (t_root2 > 0 && t_root2 < 1 && s_root2 > 0){ intersection_count++; }
   return intersection_count;
 }
+*/
+
 
 void debug(){
   std::cout << "Debugging..." << std::endl;

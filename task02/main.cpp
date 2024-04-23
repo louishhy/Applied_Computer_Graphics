@@ -116,7 +116,7 @@ int number_of_intersection_ray_against_quadratic_bezier(
   // write some code below to find the intersection between ray and the quadratic
   // 1. Calculate one of the normal vector for dir.
   Eigen::Vector2f normal(-dir[1], dir[0]);
-  // assert(dir.dot(normal) == 0);
+  assert(dir.dot(normal) == 0);
   // 2. Calculate t, since now the equation has nothing to do with s anymore.
   // The Bernstein eqn is given by p(t) = (1-t)^2 ps + t(1 - t) pc + t^2 pe.
   // p(t) is perpendicular to normal. Hence, <p(t), normal> = 0
@@ -136,9 +136,12 @@ int number_of_intersection_ray_against_quadratic_bezier(
   Eigen::Vector2f p_t_root2 = std::pow(1 - t_root2, 2) * ps + t_root2 * (1 - t_root2) * pc + std::pow(t_root2, 2) * pe;
   float s_root1 = (p_t_root1 - org).dot(dir) / dir.squaredNorm();
   float s_root2 = (p_t_root2 - org).dot(dir) / dir.squaredNorm();
+  // Normalization
+  s_root1 = s_root1 / dir.norm();
+  s_root2 = s_root2 / dir.norm();
   float intersection_count = 0;
-  if (t_root1 >= 0 && t_root1 <= 1 && s_root1 > 0){ intersection_count++; }
-  if (t_root2 >= 0 && t_root2 <= 1 && s_root2 > 0){ intersection_count++; }
+  if (t_root1 >= 0 && t_root1 <= 1 && s_root1 >= 0){ intersection_count++; }
+  if (t_root2 >= 0 && t_root2 <= 1 && s_root2 >= 0){ intersection_count++; }
   return intersection_count;
 }
 
@@ -153,7 +156,7 @@ int number_of_intersection_ray_against_quadratic_bezier_debug(
   // write some code below to find the intersection between ray and the quadratic
   // 1. Calculate one of the normal vector for dir.
   Eigen::Vector2f normal(-dir[1], dir[0]);
-  // assert(dir.dot(normal) == 0);
+  assert(dir.dot(normal) == 0);
   // 2. Calculate t, since now the equation has nothing to do with s anymore.
   // The Bernstein eqn is given by p(t) = (1-t)^2 ps + t(1 - t) pc + t^2 pe.
   // p(t) is perpendicular to normal. Hence, <p(t), normal> = 0
@@ -178,8 +181,8 @@ int number_of_intersection_ray_against_quadratic_bezier_debug(
   // Print out the vector
   std::cout << "p_t_root1: " << p_t_root1 << std::endl;
   std::cout << "p_t_root2: " << p_t_root2 << std::endl;
-  float s_root1 = (p_t_root1 - org).norm() / dir.norm();
-  float s_root2 = (p_t_root2 - org).norm() / dir.norm();
+  float s_root1 = (p_t_root1 - org).dot(dir) / dir.squaredNorm();
+  float s_root2 = (p_t_root2 - org).dot(dir) / dir.squaredNorm();
   // Output the s values
   std::cout << "s_root1: " << s_root1 << ", s_root2: " << s_root2 << std::endl;
   float intersection_count = 0;
@@ -189,11 +192,13 @@ int number_of_intersection_ray_against_quadratic_bezier_debug(
 }
 
 void debug(){
+  std::cout << "Debugging..." << std::endl;
   // Test the quadratic solver.
   QuadraticSolution sol = solve_quadratic(1, 3, -4);
   std::cout << sol << std::endl;
+  std::cout << std::endl;
   // Test the intersection of ray against quadratic bezier.
-  Eigen::Vector2f org(0.5, 0.5);
+  Eigen::Vector2f org(1, 0.1);
   // Create 30 degree vector for dir
   float degree = 0;
   Eigen::Vector2f dir(std::cos(degree * M_PI / 180), std::sin(degree * M_PI / 180));

@@ -6,6 +6,8 @@
 #include "Eigen/Core"
 //
 #include "parse_svg.h"
+// Use <optional> for better readability in quadratic function solving.
+#include <optional>
 
 /***
  * signed area of a triangle connecting points (p0, p1, p2) in counter-clockwise order.
@@ -50,6 +52,51 @@ int number_of_intersection_ray_against_edge(
 }
 
 /***
+ * (Added by student for better readability)
+ * A class to store the solution of a quadratic equation.
+ * It has two optional fields to store the roots.
+*/
+class QuadraticSolution{
+public:
+  std::optional<float> root1;
+  std::optional<float> root2;
+
+  QuadraticSolution(){
+    root1 = std::nullopt;
+    root2 = std::nullopt;
+  }
+
+  // Overload the << operator for easy printing.
+  friend std::ostream& operator<<(std::ostream &os, const QuadraticSolution &sol){
+    os << "Root 1: ";
+    if (sol.root1.has_value()){ 
+      os << sol.root1.value(); 
+    }
+    else{ os << "None"; }
+    os << ", Root 2: ";
+    if (sol.root2.has_value()){ 
+      os << sol.root2.value(); 
+    }
+    else{ os << "None"; }
+    return os;
+  }
+};
+
+
+/***
+ * (Added by student for better readability)
+ * Solve the quadratic equation denoted by ax^2 + bx + c = 0
+*/
+QuadraticSolution solve_quadratic(float a, float b, float c){
+  QuadraticSolution sol;
+  float discriminant = b * b - 4 * a * c;
+  if (discriminant < 0) { return sol; }    // There are no solution.
+  sol.root1 = (-b + std::sqrt(discriminant)) / (2 * a);
+  sol.root2 = (-b - std::sqrt(discriminant)) / (2 * a);
+  return sol;
+}
+
+/***
  *
  * @param org ray origin
  * @param dir ray direction (unit vector)
@@ -65,11 +112,100 @@ int number_of_intersection_ray_against_quadratic_bezier(
     const Eigen::Vector2f &pc,
     const Eigen::Vector2f &pe) {
   // comment out below to do the assignment
-  return number_of_intersection_ray_against_edge(org, dir, ps, pe);
+  // return number_of_intersection_ray_against_edge(org, dir, ps, pe);
   // write some code below to find the intersection between ray and the quadratic
+  // 1. Calculate one of the normal vector for dir.
+  Eigen::Vector2f normal(-dir[1], dir[0]);
+  // assert(dir.dot(normal) == 0);
+  // 2. Calculate t, since now the equation has nothing to do with s anymore.
+  // The Bernstein eqn is given by p(t) = (1-t)^2 ps + t(1 - t) pc + t^2 pe.
+  // p(t) is perpendicular to normal. Hence, <p(t), normal> = 0
+  // We can then solve the eqn wrt. t.
+  // Define the coefficient for the quadratic eqn ax^2 + bx + c = 0
+  float a = (ps - 2 * pc + pe).dot(normal);
+  float b = 2 * (pc - ps).dot(normal);
+  float c = (ps - org).dot(normal);
+  // Solve the quadratic eqn.
+  QuadraticSolution sol = solve_quadratic(a, b, c);
+  // If there are no solutions, return 0.
+  if (!sol.root1.has_value() && !sol.root2.has_value()){ return 0; }
+  float t_root1 = sol.root1.value();
+  float t_root2 = sol.root2.value();
+  // Solve for s for each t_root.
+  Eigen::Vector2f p_t_root1 = std::pow(1 - t_root1, 2) * ps + t_root1 * (1 - t_root1) * pc + std::pow(t_root1, 2) * pe;
+  Eigen::Vector2f p_t_root2 = std::pow(1 - t_root2, 2) * ps + t_root2 * (1 - t_root2) * pc + std::pow(t_root2, 2) * pe;
+  float s_root1 = (p_t_root1 - org).dot(dir) / dir.squaredNorm();
+  float s_root2 = (p_t_root2 - org).dot(dir) / dir.squaredNorm();
+  float intersection_count = 0;
+  if (t_root1 >= 0 && t_root1 <= 1 && s_root1 > 0){ intersection_count++; }
+  if (t_root2 >= 0 && t_root2 <= 1 && s_root2 > 0){ intersection_count++; }
+  return intersection_count;
+}
+
+int number_of_intersection_ray_against_quadratic_bezier_debug(
+    const Eigen::Vector2f &org,
+    const Eigen::Vector2f &dir,
+    const Eigen::Vector2f &ps,
+    const Eigen::Vector2f &pc,
+    const Eigen::Vector2f &pe) {
+  // comment out below to do the assignment
+  // return number_of_intersection_ray_against_edge(org, dir, ps, pe);
+  // write some code below to find the intersection between ray and the quadratic
+  // 1. Calculate one of the normal vector for dir.
+  Eigen::Vector2f normal(-dir[1], dir[0]);
+  // assert(dir.dot(normal) == 0);
+  // 2. Calculate t, since now the equation has nothing to do with s anymore.
+  // The Bernstein eqn is given by p(t) = (1-t)^2 ps + t(1 - t) pc + t^2 pe.
+  // p(t) is perpendicular to normal. Hence, <p(t), normal> = 0
+  // We can then solve the eqn wrt. t.
+  // Define the coefficient for the quadratic eqn ax^2 + bx + c = 0
+  float a = (ps - 2 * pc + pe).dot(normal);
+  float b = 2 * (pc - ps).dot(normal);
+  float c = (ps - org).dot(normal);
+  // Solve the quadratic eqn.
+  QuadraticSolution sol = solve_quadratic(a, b, c);
+  // Print
+  std::cout << "a: " << a << ", b: " << b << ", c: " << c << std::endl;
+  std::cout << sol << std::endl;
+  std::cout << std::endl;
+  // If there are no solutions, return 0.
+  if (!sol.root1.has_value() && !sol.root2.has_value()){ return 0; }
+  float t_root1 = sol.root1.value();
+  float t_root2 = sol.root2.value();
+  // Solve for s for each t_root.
+  Eigen::Vector2f p_t_root1 = std::pow(1 - t_root1, 2) * ps + t_root1 * (1 - t_root1) * pc + std::pow(t_root1, 2) * pe;
+  Eigen::Vector2f p_t_root2 = std::pow(1 - t_root2, 2) * ps + t_root2 * (1 - t_root2) * pc + std::pow(t_root2, 2) * pe;
+  // Print out the vector
+  std::cout << "p_t_root1: " << p_t_root1 << std::endl;
+  std::cout << "p_t_root2: " << p_t_root2 << std::endl;
+  float s_root1 = (p_t_root1 - org).norm() / dir.norm();
+  float s_root2 = (p_t_root2 - org).norm() / dir.norm();
+  // Output the s values
+  std::cout << "s_root1: " << s_root1 << ", s_root2: " << s_root2 << std::endl;
+  float intersection_count = 0;
+  if (t_root1 > 0 && t_root1 < 1 && s_root1 > 0){ intersection_count++; }
+  if (t_root2 > 0 && t_root2 < 1 && s_root2 > 0){ intersection_count++; }
+  return intersection_count;
+}
+
+void debug(){
+  // Test the quadratic solver.
+  QuadraticSolution sol = solve_quadratic(1, 3, -4);
+  std::cout << sol << std::endl;
+  // Test the intersection of ray against quadratic bezier.
+  Eigen::Vector2f org(0.5, 0.5);
+  // Create 30 degree vector for dir
+  float degree = 0;
+  Eigen::Vector2f dir(std::cos(degree * M_PI / 180), std::sin(degree * M_PI / 180));
+  Eigen::Vector2f ps(0, 0);
+  Eigen::Vector2f pc(1, 1);
+  Eigen::Vector2f pe(2, 0);
+  int count = number_of_intersection_ray_against_quadratic_bezier_debug(org, dir, ps, pc, pe);
+  std::cout << "Count: " << count << std::endl;
 }
 
 int main() {
+  debug();
   const auto input_file_path = std::filesystem::path(PROJECT_SOURCE_DIR) / ".." / "asset" / "r.svg";
   const auto [width, height, shape] = acg::svg_get_image_size_and_shape(input_file_path);
   if (width == 0) { // something went wrong in loading the function

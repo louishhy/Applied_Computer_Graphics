@@ -69,6 +69,18 @@ void draw_3d_triangle_with_texture(
       // (Hint: formulate a linear system with 4x4 coefficient matrix and solve it to get the barycentric coordinate)
       Eigen::Matrix4f coeff;
       Eigen::Vector4f rhs;
+      /*
+      Here I explain how I construct the linear system.
+      Let the barycentric coordinate be v = [alpha, beta, gamma]
+      Now, given that we have transformed Hp = alpha * Hp0 + beta * Hp1 + gamma * Hp2, we can write this as:
+      Hp = alpha * q0 + beta * q1 + gamma * q2.
+      Let Q = [q0, q1, q2]
+      Then, we can write the full logic as
+      Qv = pos_screen
+      */
+      // rhs is the screen homogeneous coordinate. We yield it using the barycentric coordinates.
+      rhs = (r0 * bc[0] + r1 * bc[1] + r2 * bc[2]).homogeneous();
+      // the coeff = []
 
       // do not change below
       auto uv = uv0 * bc[0] + uv1 * bc[1] + uv2 * bc[2]; // uv coordinate of the pixel

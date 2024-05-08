@@ -51,10 +51,6 @@ void draw_3d_triangle_with_texture(
     unsigned int width_tex,
     unsigned int height_tex,
     std::vector<unsigned char> &img_data_tex) {
-  // Print q0, q1, q2
-  std::cout << "q0: " << q0 << std::endl;
-  std::cout << "q1: " << q1 << std::endl;
-  std::cout << "q2: " << q2 << std::endl;
   for (unsigned int ih = 0; ih < height_out; ++ih) {
     for (unsigned int iw = 0; iw < width_out; ++iw) {
       const auto s = Eigen::Vector2f( // coordinate of the pixel in the normalized device coordinate [-1,1]^2
@@ -102,7 +98,6 @@ void draw_3d_triangle_with_texture(
       if (bc[0] < 0 || bc[1] < 0 || bc[2] < 0) { continue; }
       // do not change below
       auto uv = uv0 * bc[0] + uv1 * bc[1] + uv2 * bc[2]; // uv coordinate of the pixel
-      std::cout << "UV: " << uv << std::endl;
       // compute pixel coordinate of the texture
       auto iw_tex = static_cast<unsigned int>((uv[0] - std::floor(uv[0])) * float(width_tex));
       auto ih_tex = static_cast<unsigned int>((1.0 - uv[1] - std::floor(uv[1])) * float(height_tex));

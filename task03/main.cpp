@@ -51,6 +51,10 @@ void draw_3d_triangle_with_texture(
     unsigned int width_tex,
     unsigned int height_tex,
     std::vector<unsigned char> &img_data_tex) {
+  // Print q0, q1, q2
+  std::cout << "q0: " << q0 << std::endl;
+  std::cout << "q1: " << q1 << std::endl;
+  std::cout << "q2: " << q2 << std::endl;
   for (unsigned int ih = 0; ih < height_out; ++ih) {
     for (unsigned int iw = 0; iw < width_out; ++iw) {
       const auto s = Eigen::Vector2f( // coordinate of the pixel in the normalized device coordinate [-1,1]^2
@@ -71,26 +75,24 @@ void draw_3d_triangle_with_texture(
       Eigen::Vector4f rhs;
       /*
       Here I explain how I construct the linear system.
-      Let the barycentric coordinate be v = [alpha, beta, gamma]
+      Let the target vector be v = [alpha, beta, gamma, w], where w is the homogeneous term of the projected point.
       Now, given that we have transformed Hp = alpha * Hp0 + beta * Hp1 + gamma * Hp2, we can write this as:
       Hp = alpha * q0 + beta * q1 + gamma * q2.
       Let Q = [q0, q1, q2]
-      Then, we can write the full logic as
-      Qv = pos_screen.
-      Now, pos_screen = (w*bc1, w*bc2, w), since we are considering a homogeneous coordinate.
+      Then, we can write the effective linear system constrant as
+      Qv = projected_point.
+      This, added w/ the term alpha + beta + gamma = 1, gives us the full linear system.
       We can move these terms to the LHS to get the final combination:
       [q1x, q2x, q3x, -screen_x][alpha] = 0
       [q1y, q2y, q3y, -screen_y][beta] = 0
-      [q1z, q2z, q3z, -1][gamma] = 0
+      [q1w, q2w, q3w, -1][gamma] = 0
       [1, 1, 1, 0][w] = 1
       */
-      // rhs is the screen homogeneous coordinate. We yield it using the barycentric coordinates.
-      Eigen::Vector2f screen_coord = (r0 * bc[0] + r1 * bc[1] + r2 * bc[2]);
       rhs = Eigen::Vector4f(0, 0, 0, 1);
       // the coeff = []
-      coeff << q1[0], q2[0], q0[0], -screen_coord[0],
-               q1[1], q2[1], q0[1], -screen_coord[1],
-               q1[2], q2[2], q0[2], -1,
+      coeff << q0[0], q1[0], q2[0], -s[0],
+               q0[1], q1[1], q2[1], -s[1],
+               q0[3], q1[3], q2[3], -1,
                1, 1, 1, 0;
       // Solve for alpha, beta, gamma, w
       Eigen::Vector4f v = coeff.colPivHouseholderQr().solve(rhs);

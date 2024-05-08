@@ -76,12 +76,26 @@ void draw_3d_triangle_with_texture(
       Hp = alpha * q0 + beta * q1 + gamma * q2.
       Let Q = [q0, q1, q2]
       Then, we can write the full logic as
-      Qv = pos_screen
+      Qv = pos_screen.
+      Now, pos_screen = (w*bc1, w*bc2, w), since we are considering a homogeneous coordinate.
+      We can move these terms to the LHS to get the final combination:
+      [q1x, q2x, q3x, -screen_x][alpha] = 0
+      [q1y, q2y, q3y, -screen_y][beta] = 0
+      [q1z, q2z, q3z, -1][gamma] = 0
+      [1, 1, 1, 0][w] = 1
       */
       // rhs is the screen homogeneous coordinate. We yield it using the barycentric coordinates.
-      rhs = (r0 * bc[0] + r1 * bc[1] + r2 * bc[2]).homogeneous();
+      Eigen::Vector2f screen_coord = (r0 * bc[0] + r1 * bc[1] + r2 * bc[2]);
+      rhs = Eigen::Vector4f(screen_coord[0], screen_coord[1], 1, 1);
       // the coeff = []
-
+      coeff << q1[0], q2[0], q0[0], -screen_coord[0],
+               q1[1], q2[1], q0[1], -screen_coord[1],
+               q1[2], q2[2], q0[2], -1,
+               1, 1, 1, 0;
+      // Solve for alpha, beta, gamma, w
+      Eigen::Vector4f v = coeff.colPivHouseholderQr().solve(rhs);
+      // The barycentric coordinate is given into bc
+      bc = Eigen::Vector3f(v[0], v[1], v[2]);
       // do not change below
       auto uv = uv0 * bc[0] + uv1 * bc[1] + uv2 * bc[2]; // uv coordinate of the pixel
       // compute pixel coordinate of the texture

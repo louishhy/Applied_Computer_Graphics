@@ -86,7 +86,7 @@ void draw_3d_triangle_with_texture(
       */
       // rhs is the screen homogeneous coordinate. We yield it using the barycentric coordinates.
       Eigen::Vector2f screen_coord = (r0 * bc[0] + r1 * bc[1] + r2 * bc[2]);
-      rhs = Eigen::Vector4f(screen_coord[0], screen_coord[1], 1, 1);
+      rhs = Eigen::Vector4f(0, 0, 0, 1);
       // the coeff = []
       coeff << q1[0], q2[0], q0[0], -screen_coord[0],
                q1[1], q2[1], q0[1], -screen_coord[1],
@@ -96,8 +96,11 @@ void draw_3d_triangle_with_texture(
       Eigen::Vector4f v = coeff.colPivHouseholderQr().solve(rhs);
       // The barycentric coordinate is given into bc
       bc = Eigen::Vector3f(v[0], v[1], v[2]);
+      // If the barycentric coordinate is negative, we discard the pixel since it is outside the triangle.
+      if (bc[0] < 0 || bc[1] < 0 || bc[2] < 0) { continue; }
       // do not change below
       auto uv = uv0 * bc[0] + uv1 * bc[1] + uv2 * bc[2]; // uv coordinate of the pixel
+      std::cout << "UV: " << uv << std::endl;
       // compute pixel coordinate of the texture
       auto iw_tex = static_cast<unsigned int>((uv[0] - std::floor(uv[0])) * float(width_tex));
       auto ih_tex = static_cast<unsigned int>((1.0 - uv[1] - std::floor(uv[1])) * float(height_tex));

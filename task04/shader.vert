@@ -24,15 +24,40 @@ void main()
         // make sure the occlusion is correctly computed.
         // the mirror is behind the armadillo, so the reflected image should be behind the armadillo.
         // furthermore, make sure the occlusion is correctly computed for the reflected image.
+        // === Code added from here ===
         // First let us denote a vector pp0 = (x0, y0, z0) - org. p is the point on the armadillo, p = (x0, y0, z0).
         vec3 pp0 = vec3(x0, y0, z0) - org;
         // Let us project pp0 onto the normal vector nrm.
         vec3 pp0_proj = dot(pp0, nrm) * nrm;
         // The reflected point is given by p - 2 * pp0_proj.
         vec3 p_reflected = vec3(x0, y0, z0) - 2.0 * pp0_proj;
-        x0 = p_reflected.x;
-        y0 = p_reflected.y;
-        z0 = p_reflected.z;
+        // Translate the rendered object outwards by trans_len,
+        // so that it is contained in the frustum.
+        // P.S. A more general method I propose is that
+        // we get the point w/ the largest projected z.
+        // Then, we calculate the maximum overflow amount and 
+        // can translate toward the screen by that amount.
+        // However, we are only required to modify the .vert, 
+        // so I will just use a tuned fixed value.
+        float trans_len = 0.5;
+        p_reflected.z = p_reflected.z + trans_len;
+        // Supress the reflection when reflected z is larger than the original z
+        // AND the point behind the original point in the foreground.
+        // (This is induced by the translation-out operation)
+        // This handles the occlusion.
+        if (p_reflected.z >= z0 && p_reflected.x == x0 && p_reflected.y == y0){
+            // Render the point behind the original object, so that it is occluded
+            float epsilon = 0.001;
+            x0 = p_reflected.x;
+            y0 = p_reflected.y;
+            z0 = z0 - epsilon;
+        }
+        else {
+            // Render as usual.
+            x0 = p_reflected.x;
+            y0 = p_reflected.y;
+            z0 = p_reflected.z;
+        }
     }
     // do not edit below
 

@@ -11,6 +11,19 @@ float sdCappedCylinder( vec3 p, float h, float r )
   return min(max(d.x,d.y),0.0) + length(max(d,0.0));
 }
 
+// Here I add two more function to add cylinder aligned in other 2 directions
+float sdCappedCylinder1( vec3 p, float h, float r )
+{
+  vec2 d = abs(vec2(length(p.yz),p.x)) - vec2(r,h);
+  return min(max(d.x,d.y),0.0) + length(max(d,0.0));
+}
+
+float sdCappedCylinder2( vec3 p, float h, float r )
+{
+  vec2 d = abs(vec2(length(p.xy),p.z)) - vec2(r,h);
+  return min(max(d.x,d.y),0.0) + length(max(d,0.0));
+}
+
 // signed distance function of an axis aligned box.
 // code from: https://iquilezles.org/articles/distfunctions/
 float sdBox( vec3 p, vec3 b )
@@ -35,16 +48,42 @@ float box_size = 0.6; // size of box
 /// singed distance function at the position `pos`
 float SDF(vec3 pos)
 {
-  float d0 = sdCappedCylinder(pos, len_cylinder, rad_cylinder);
   // write some code to combine the signed distance fields above to design the object described in the README.md
-  return d0; // comment out and define new distance
+  // Defining the cylinder composite by union.
+  float cylin0 = sdCappedCylinder(pos, len_cylinder, rad_cylinder);
+  float cylin1 = sdCappedCylinder1(pos, len_cylinder, rad_cylinder);
+  float cylin2 = sdCappedCylinder2(pos, len_cylinder, rad_cylinder);
+  float cylin_composite = min(cylin0, min(cylin1, cylin2));
+  // Defining the sphere-block composite by intersection.
+  float sphere = sdSphere(pos, rad_sphere);
+  float block = sdBox(pos, vec3(box_size, box_size, box_size));
+  float sphere_block_composite = max(sphere, block);
+  // Defining the setdiff between the cylinder composite and the sphere-block composite
+  float d0 = max(-cylin_composite, sphere_block_composite);
+  // return d0; // comment out and define new distance
+  return d0;
 }
 
 /// RGB color at the position `pos`
 vec3 SDF_color(vec3 pos)
 {
+  // Define the distance to each primitives
+  float cylin0 = sdCappedCylinder(pos, len_cylinder, rad_cylinder);
+  float cylin1 = sdCappedCylinder1(pos, len_cylinder, rad_cylinder);
+  float cylin2 = sdCappedCylinder2(pos, len_cylinder, rad_cylinder);
+  float cylin_composite = min(cylin0, min(cylin1, cylin2));
+  float sphere = sdSphere(pos, rad_sphere);
+  float block = sdBox(pos, vec3(box_size, box_size, box_size));
+  float eps = 1.0e-3;
+  // Color based on the distance to the primitives
+  // Color green
+  if (abs(cylin_composite) < eps) return vec3(0., 1., 0.);
+  // Color red
+  if (abs(block) < eps) return vec3(1., 0., 0.);
+  // Color blue
+  if (abs(sphere) < eps) return vec3(0., 0., 1.);
   // write some code below to return color (RGB from 0 to 1) to paint the object describe in README.md
-  return vec3(0., 1., 0.); // comment out and define new color
+  //return vec3(0., 1., 0.); // comment out and define new color
 }
 
 uniform float time; // current time given from CPU

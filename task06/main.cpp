@@ -241,7 +241,9 @@ int main() {
           const auto res1 = find_intersection_between_ray_and_triangle_mesh(
               pos0, dir, tri2vtx, vtx2xyz, bvhnodes);
           if (!res1) { // if the ray doe not hit anything
-            sum += 1.f; // Problem 3: This is a bug. write some correct code (hint: use `dir.dot(nrm)`, `pdf`, `M_PI`).
+            //sum += 1.f; // Problem 3: This is a bug. write some correct code (hint: use `dir.dot(nrm)`, `pdf`, `M_PI`).
+            // Here is the correct impl.
+            sum += (1 / M_PI) * dir.dot(nrm) / pdf;
           }
         }
         img_data_ao[ih * img_width + iw] = sum / float(num_sample_ao); // do not change

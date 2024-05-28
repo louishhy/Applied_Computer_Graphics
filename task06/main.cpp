@@ -58,7 +58,9 @@ auto sample_hemisphere(
 
   // For Problem 4, write some code below to sample hemisphere with cosign weight
   // (i.e., the sampling frequency is higher at the top)
+  // Solving z, we would yield z = sqrt(u), u ~ U(0,1)
   const float z_cos = std::sqrt(unirand.x());
+  // r can be derived from z
   const float r_cos = std::sqrt(1.f - z * z);
   dir_loc = Eigen::Vector3f( // direction in normal coordinate
       r_cos * std::cos(phi),

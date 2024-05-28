@@ -119,14 +119,33 @@ void search_collision_in_bvh(
   // For problem 2, implement some code here to evaluate BVH
   // hint: use following function
   //   bvhnodes[i_bvhnode].intersect_bv(ray_org, ray_dir)
-
+  bool bvh_check_result = bvhnodes[i_bvhnode].intersect_bv(ray_org, ray_dir);
+  // If it does not intersect, return immediately
+  if (!bvh_check_result) { return; }
+  // Else we continue our search
   if (bvhnodes[i_bvhnode].is_leaf()) { // this is leaf node
     const unsigned int i_tri = bvhnodes[i_bvhnode].i_node_left;
     // do something
+    // Check if the ray intersects the triangle
+    const auto res = ray_triangle_intersection(ray_org, ray_dir, i_tri, tri2vtx, vtx2xyz);
+    if (!res) {
+      return; 
+    }
+    const auto& [q0,n0] = res.value();
+    const float depth = (q0 - ray_org).dot(ray_dir);
+    if (hit_depth > depth) {
+      is_hit = true;
+      hit_depth = depth;
+      hit_pos = q0;
+      hit_normal = n0;
+    }
   } else { // this is branch node
     unsigned int i_node_right = bvhnodes[i_bvhnode].i_node_right;
     unsigned int i_node_left =bvhnodes[i_bvhnode].i_node_left;
     // do something (hint recursion)
+    // Recursive search down the tree
+    search_collision_in_bvh(is_hit, hit_depth, hit_pos, hit_normal, i_node_left, ray_org, ray_dir, tri2vtx, vtx2xyz, bvhnodes);
+    search_collision_in_bvh(is_hit, hit_depth, hit_pos, hit_normal, i_node_right, ray_org, ray_dir, tri2vtx, vtx2xyz, bvhnodes);
   }
 }
 
@@ -143,6 +162,7 @@ auto find_intersection_between_ray_and_triangle_mesh(
   Eigen::Vector3f hit_normal;
 
   // for Problem 2,3,4, comment out from here
+  /*
   for (unsigned int i_tri = 0; i_tri < tri2vtx.rows(); ++i_tri) {
     const auto res = ray_triangle_intersection(ray_org, ray_dir, i_tri, tri2vtx, vtx2xyz);
     if (!res) { continue; }
@@ -155,6 +175,7 @@ auto find_intersection_between_ray_and_triangle_mesh(
       hit_normal = n0;
     }
   }
+  */
   // comment out end
 
   // do not edit from here

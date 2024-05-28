@@ -229,7 +229,7 @@ int main() {
         img_data_nrm[(ih * img_width + iw) * 3 + 1] = nrm.y() * 0.5f + 0.5f;
         img_data_nrm[(ih * img_width + iw) * 3 + 2] = nrm.z() * 0.5f + 0.5f;
       }
-      continue; // comment out here for Problem 3,4
+      //continue; // comment out here for Problem 3,4
       //
       if (res) { // ambient occlusion computation
         const unsigned int num_sample_ao = 100;

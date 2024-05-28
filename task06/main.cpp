@@ -41,6 +41,8 @@ auto sample_hemisphere(
   const float phi = 2.f * float(M_PI) * unirand.y();
 
   // the code to uniformly sample hemisphere (z-up)
+  // BECAUSE NO INSTRUCTION IS GIVEN TO DELETE THE CODE
+  // I LEFT THE ORIGINAL ONE AND OVERWRITE IT WITH THE NEW COSINE SAMPLING CODE BELOW.
   const float z = unirand.x();
   const float r = std::sqrt(1.f - z * z);
   auto dir_loc = Eigen::Vector3f( // direction in normal coordinate
@@ -51,7 +53,13 @@ auto sample_hemisphere(
 
   // For Problem 4, write some code below to sample hemisphere with cosign weight
   // (i.e., the sampling frequency is higher at the top)
-
+  const float z_cos = std::sqrt(unirand.x());
+  const float r_cos = std::sqrt(1.f - z * z);
+  dir_loc = Eigen::Vector3f( // direction in normal coordinate
+      r_cos * std::cos(phi),
+      r_cos * std::sin(phi),
+      z_cos);
+  pdf = z_cos / M_PI;
 
   // end of Problem 4. Do not modify the two lines below
   const auto dir_out = local_to_world_vector_transformation(nrm) * dir_loc; // rotate the sample (zup -> nrm)

@@ -140,6 +140,27 @@ class HelloWorld(mglw.WindowConfig):
         # spsolve: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.spsolve.html#scipy.sparse.linalg.spsolve
 
 
+        # Problem 2: Solve for Laplacian deformation
+        # The derivative of (x-x_def)D(x-x_def) + (x-x_ini)L(x-x_ini) w.r.t. x is
+        # 2D(x-x_def) + 2L(x-x_ini) = 0
+        # => (D + L)x = Dx_def + Lx_ini
+        A_laplacian = self.matrix_fix + self.matrix_laplace
+        b_laplacian = self.matrix_fix @ self.vtx2xyz_def + self.matrix_laplace @ self.vtx2xyz_ini
+        self.vtx2xyz_def = spsolve(A_laplacian, b_laplacian)
+        # convert to contiguous array to avoid error
+        self.vtx2xyz_def = np.ascontiguousarray(self.vtx2xyz_def, dtype=np.float32)
+
+        # Problem 3: Solve for Bi-Laplacian deformation
+        # Similar to above, 
+        # the derivative of (x-x_def)D(x-x_def) + (x-x_ini)L^2(x-x_ini) w.r.t. x is
+        # 2D(x-x_def) + 2L^2(x-x_ini) = 0
+        # => (D + L^2)x = Dx_def + L^2x_ini
+        A_bilaplacian = self.matrix_fix + self.matrix_bilaplace
+        b_bilaplacian = self.matrix_fix @ self.vtx2xyz_def + self.matrix_bilaplace @ self.vtx2xyz_ini
+        self.vtx2xyz_def = spsolve(A_bilaplacian, b_bilaplacian)
+        # convert to contiguous array to avoid error
+        self.vtx2xyz_def = np.ascontiguousarray(self.vtx2xyz_def, dtype=np.float32)
+
         # do not edit beyond here
         # above: deformation
         # ---------------------
